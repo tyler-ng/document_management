@@ -6,6 +6,8 @@ services:
     command: gunicorn core.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - .:/code
+      - static_volume:/code/static
+      - media_volume:/code/media
     env_file:
       - ./.env
     expose:
@@ -14,31 +16,28 @@ services:
       - db
     environment:
       - DEBUG=0
-      - SECRET_KEY=your_production_secret_key
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
       
   db:
     image: postgres:15
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     environment:
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_USER=postgres
       - POSTGRES_DB=postgres
       
   nginx:
     build: ./nginx
     volumes:
-      - static_volume:/code/staticfiles
-      - media_volume:/code/mediafiles
+      - static_volume:/code/static
+      - media_volume:/code/media
     ports:
-      - 1337:80
+      - "80:80"
     depends_on:
       - web
 
